@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend
+  template:
+    metadata:
+      labels:
+        app: backend
+    spec:
+      containers:
+        - name: backend
+          image: three-tier-backend:v1
+          # IMPORTANT: Never pull from Docker Hub, use the local image we loaded
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 5000
+          # This connects to the endpoint we created in Phase 1
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-service
+spec:
+  selector:
+    app: backend
+  ports:
+    - protocol: TCP
+      port: 5000        # Port the Service exposes
+      targetPort: 5000  # Port the Container is listening on
+  type: ClusterIP       # Internal only (default)
