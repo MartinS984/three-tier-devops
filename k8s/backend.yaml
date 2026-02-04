@@ -14,12 +14,29 @@ spec:
     spec:
       containers:
         - name: backend
-          image: three-tier-backend:v1
-          # IMPORTANT: Never pull from Docker Hub, use the local image we loaded
+          image: three-tier-backend:v2
           imagePullPolicy: Never
           ports:
             - containerPort: 5000
-          # This connects to the endpoint we created in Phase 1
+          
+          # --- ADD THIS SECTION START ---
+          env:
+            - name: DB_HOST
+              value: "postgres-service" # This matches the Service name in database.yaml
+            - name: DB_NAME
+              value: "threetierdb"
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: postgres-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-secret
+                  key: postgres-password
+          # --- ADD THIS SECTION END ---
+
           readinessProbe:
             httpGet:
               path: /health
@@ -37,6 +54,6 @@ spec:
     app: backend
   ports:
     - protocol: TCP
-      port: 5000        # Port the Service exposes
-      targetPort: 5000  # Port the Container is listening on
-  type: ClusterIP       # Internal only (default)
+      port: 5000
+      targetPort: 5000
+  type: ClusterIP
